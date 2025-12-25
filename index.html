@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Üretim Takip Paneli</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .animated-gradient-bg {
+      background-image: linear-gradient(to top right, #3b82f6, #10b981, #22c55e);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Modal (Veri Girişi) */
+    #modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    
+    /* Mola Modalı (Daha yüksek z-index ve koyu arka plan) */
+    #breakModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95); /* Arkasını göstermesin */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999; /* En üstte */
+      flex-direction: column;
+    }
+
+    /* Tablo hücrelerinin boşken çökmemesi için min yükseklik */
+    td { height: 35px; }
+  </style>
+</head>
+
+<body class="animated-gradient-bg min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white/80 backdrop-blur-md shadow-2xl rounded-2xl w-[95%] h-[95vh] p-6 flex flex-col gap-4">
+
+    <div class="flex items-center justify-between w-full shrink-0">
+      <div class="flex items-center justify-between w-full shrink-0">
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center bg-blue-50 px-3 py-1 rounded-lg border border-blue-100">
+            <img id="weatherIcon" src="" alt="Hava Durumu" class="w-8 h-8 hidden" /> <div class="flex flex-col ml-2">
+              <h2 id="weatherTemp" class="text-sm font-bold text-gray-800">Yükleniyor...</h2>
+              <span id="weatherDesc" class="text-[10px] font-semibold text-gray-500 uppercase leading-tight">...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1 ml-6">
+          <div class="bg-white/90 shadow-md rounded-xl px-4 py-2 w-full flex items-center justify-center space-x-2">
+            <h6 class="text-xs font-semibold text-gray-700">🕒 Mola Saati:</h6>
+            <p id="molaSaati" class="text-xs font-bold text-blue-600"></p>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 ml-6">
+        <div class="bg-white/90 shadow-md rounded-xl px-4 py-2 w-full flex items-center justify-center space-x-2">
+          <h6 class="text-xs font-semibold text-gray-700">🕒 Mola Saati:</h6>
+          <p id="molaSaati" class="text-xs font-bold text-blue-600"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex w-full space-x-4 flex-1 min-h-0">
+      
+      <div class="w-3/4 flex flex-col h-full bg-white/90 rounded-lg border border-gray-300 overflow-hidden">
+        <div class="flex-1 overflow-auto"> 
+          <table id="durusTablo" class="w-full text-[12px] table-auto">
+            <thead class="bg-gray-200 sticky top-0">
+              <tr class="h-8">
+                <th class="px-2 py-1 text-left font-semibold text-gray-700 border-b border-gray-300 border-r border-gray-300 w-1/3">🕓 Başlangıç</th>
+                <th class="px-2 py-1 text-left font-semibold text-gray-700 border-b border-gray-300 border-r border-gray-300 w-1/3">⏱️ Bitiş</th>
+                <th class="px-2 py-1 text-left font-semibold text-gray-700 border-b border-gray-300 w-1/3">⚙️ Duruş Sebebi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+              <tr class="border-b border-gray-200 hover:bg-gray-50"> <td class="px-2 border-r"></td> <td class="px-2 border-r"></td> <td class="px-2"></td> </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex flex-col w-1/4 space-y-2 h-full">
+        <div class="flex space-x-2 w-full shrink-0">
+          <button id="baslaBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition text-sm py-4 w-full shadow-sm">Başla</button>
+          <button id="bitirBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition text-sm py-4 w-full shadow-sm">Bitir</button>
+        </div>
+        
+        <div class="bg-black rounded-xl shadow-lg p-4 flex flex-col items-center justify-center w-full flex-1">
+          <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-2">Süre</h4>
+          <p id="kronometre" class="text-yellow-400 text-4xl font-mono font-bold">00:00:00</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative w-full mt-4">
+
+      <div id="progressMarker" 
+           class="absolute top-0 left-0 -mt-[8px]
+                  w-0 h-0
+                  border-l-[8px] border-l-transparent
+                  border-r-[8px] border-r-transparent
+                  border-t-[10px] border-t-black
+                  z-10 filter drop-shadow-sm
+                  transition-all duration-1000 ease-linear transform -translate-x-1/2"
+           style="left: 0%;">
+      </div>
+
+      <div class="w-full bg-gray-200 rounded-xl h-8 flex overflow-hidden shrink-0 shadow-inner relative z-0">
+        <div class="bg-yellow-400 flex items-center justify-center text-xs font-bold text-black w-[40%] border-r border-yellow-500">30 dk</div>
+        <div class="bg-red-400 flex items-center justify-center text-xs font-bold text-black w-[20%] border-r border-red-500">45 dk</div>
+        <div class="bg-red-700 flex items-center justify-center text-xs font-bold text-white w-[40%]">75 dk</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="modal">
+    <div class="bg-white p-4 rounded-xl w-[300px] flex flex-col gap-2">
+      <h3 class="font-semibold text-gray-800 text-sm">Duruş Sebebini Girin</h3>
+      <input type="text" id="modalInput" class="border p-2 rounded w-full text-sm" placeholder="Örn: Makine Arızası..."/>
+      <div class="flex justify-end gap-2">
+        <button id="modalCancel" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-1 px-3 rounded text-xs">İptal</button>
+        <button id="modalOk" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded text-xs">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="breakModal">
+    <div class="bg-white p-8 rounded-2xl text-center shadow-2xl max-w-md animate-bounce-slow">
+      <div class="mb-4 text-6xl">☕</div>
+      
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">MOLA SAATİ</h1>
+      
+      <p class="text-lg text-gray-600 font-medium mb-4">
+        Mola saatiniz <span class="text-blue-600 font-bold">15 dk</span>'dır.
+      </p>
+      
+      <div class="bg-gray-100 rounded-lg p-3 mb-6 inline-block">
+        <span id="breakTimeRange" class="text-xl font-mono font-bold text-gray-800">--:-- - --:--</span>
+      </div>
+
+      <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded" role="alert">
+        <p class="font-bold">Üretim Durduruldu</p>
+        <p class="text-sm">Üretim sürecine devam edemezsiniz, mola saatinizdesiniz.</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+    // ---------------------------------------------------------
+    // 1. HAVA DURUMU (AKILLI HATA YÖNETİMİ İLE)
+    // ---------------------------------------------------------
+    const API_KEY = "685cf1b42f9194b7517c28fef07d4990"; // Sizin Key'iniz
+    const lat = "39.93"; // Ankara
+    const lon = "32.85";
+    
+    async function havaDurumuGetir() {
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=tr`;
+      
+      try {
+        const response = await fetch(url);
+        
+        // Hata kontrolü (401 yetki hatası vb.)
+        if (!response.ok) {
+            throw new Error(`API Hatası: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // --- GERÇEK VERİ GELDİYSE ---
+        const sicaklik = Math.round(data.main.temp);
+        const durum = data.weather[0].description;
+        // İlk harfleri büyüt
+        const durumFormatli = durum.replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+        const iconCode = data.weather[0].icon; 
+
+        uiGuncelle(sicaklik, durumFormatli, iconCode);
+
+      } catch (error) {
+        console.warn("API Henüz Aktif Değil veya Hata Var. Test verisi gösteriliyor.", error);
+        
+        // --- HATA VARSA SAHTE VERİ GÖSTER (TEST İÇİN) ---
+        // API Key aktifleşene kadar burası çalışır.
+        uiGuncelle(22, "Parçalı Bulutlu (Test)", "04d");
+      }
+    }
+
+    // Ekrana Yazdırma Fonksiyonu
+    function uiGuncelle(temp, desc, icon) {
+        const tempEl = document.getElementById("weatherTemp");
+        const descEl = document.getElementById("weatherDesc");
+        const iconEl = document.getElementById("weatherIcon");
+
+        if(tempEl) tempEl.innerText = `${temp}°C`;
+        if(descEl) descEl.innerText = desc;
+        if(iconEl) {
+            iconEl.src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+            iconEl.classList.remove("hidden");
+        }
+    }
+
+    // Başlat
+    havaDurumuGetir();
+    setInterval(havaDurumuGetir, 1800000); // 30 dk'da bir yenile
+
+
+    // ---------------------------------------------------------
+    // 2. MOLA VE SAYAÇ SİSTEMİ (MEVCUT KODLARINIZ)
+    // ---------------------------------------------------------
+    
+    // Mola Ayarları
+    const molaAraliklari = [
+      { start: "15:30", end: "15:45" },
+      { start: "15:30", end: "15:45" },
+    ];
+
+    const breakModal = document.getElementById("breakModal");
+    const breakTimeRangeEl = document.getElementById("breakTimeRange");
+    let isBreakActive = false;
+
+    // Saat formatını dakikaya çevir
+    function getMinutes(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    // Mola Kontrolü
+    function checkBreakTime() {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      
+      let activeBreak = null;
+      for (let range of molaAraliklari) {
+        const startMin = getMinutes(range.start);
+        const endMin = getMinutes(range.end);
+        
+        if (currentMinutes >= startMin && currentMinutes < endMin) {
+          activeBreak = range;
+          break;
+        }
+      }
+
+      if (activeBreak) {
+        // Mola Başladı
+        if (!isBreakActive) {
+          isBreakActive = true;
+          if(breakModal) {
+            breakModal.style.display = "flex";
+            if(breakTimeRangeEl) breakTimeRangeEl.textContent = `${activeBreak.start} - ${activeBreak.end}`;
+          }
+          
+          if (kronometreInterval) {
+            clearInterval(kronometreInterval);
+            kronometreInterval = null; 
+          }
+          
+          toggleButtons(false);
+        }
+      } else {
+        // Mola Bitti
+        if (isBreakActive) {
+          isBreakActive = false;
+          if(breakModal) breakModal.style.display = "none";
+          toggleButtons(true);
+        }
+      }
+    }
+
+    function toggleButtons(enable) {
+        const btnStart = document.getElementById("baslaBtn");
+        const btnEnd = document.getElementById("bitirBtn");
+        
+        if(btnStart) {
+            btnStart.disabled = !enable;
+            enable ? btnStart.classList.remove("opacity-50", "cursor-not-allowed") : btnStart.classList.add("opacity-50", "cursor-not-allowed");
+        }
+        if(btnEnd) {
+            btnEnd.disabled = !enable;
+            enable ? btnEnd.classList.remove("opacity-50", "cursor-not-allowed") : btnEnd.classList.add("opacity-50", "cursor-not-allowed");
+        }
+    }
+
+    setInterval(checkBreakTime, 1000);
+    checkBreakTime(); // Başlangıçta kontrol et
+
+    // Animasyonlu Mola Başlığı
+    const molaSaatleriGorsel = ["08:30 - 08:45", "15:30 - 15:45"];
+    let index = 0;
+    const molaYazi = document.getElementById("molaSaati");
+    function molaGuncelle() {
+      if(molaYazi) {
+        molaYazi.textContent = molaSaatleriGorsel[index];
+        index = (index + 1) % molaSaatleriGorsel.length;
+      }
+    }
+    molaGuncelle();
+    setInterval(molaGuncelle, 5000);
+
+    // Kronometre
+    const kronometreEl = document.getElementById("kronometre");
+    const markerEl = document.getElementById("progressMarker");
+    let kronometreInterval;
+    let saniye = 0;
+    const toplamSureSaniye = 75 * 60; 
+    let currentRowIndex = 0;
+    const maxRows = 8;
+    const tbody = document.getElementById("durusTablo") ? document.getElementById("durusTablo").querySelector("tbody") : null;
+
+    function formatZaman(s) {
+      const h = Math.floor(s / 3600).toString().padStart(2,'0');
+      const m = Math.floor((s % 3600) / 60).toString().padStart(2,'0');
+      const sec = (s % 60).toString().padStart(2,'0');
+      return `${h}:${m}:${sec}`;
+    }
+
+    function updateMarker(currentSeconds) {
+      if(!markerEl) return;
+      let percentage = (currentSeconds / toplamSureSaniye) * 100;
+      if (percentage > 100) percentage = 100;
+      markerEl.style.left = percentage + "%";
+    }
+
+    const btnStart = document.getElementById("baslaBtn");
+    if(btnStart) {
+        btnStart.addEventListener("click", function() {
+          if (isBreakActive) return;
+          if(currentRowIndex >= maxRows) {
+            alert("Maksimum 8 işlem kaydı tamamlandı!");
+            return;
+          }
+          if(kronometreInterval) return; 
+
+          if (saniye === 0) {
+              kronometreEl.textContent = formatZaman(saniye);
+              updateMarker(saniye);
+              const now = new Date();
+              if(tbody) tbody.rows[currentRowIndex].cells[0].textContent = now.toLocaleTimeString();
+          }
+
+          kronometreInterval = setInterval(() => {
+            saniye++;
+            kronometreEl.textContent = formatZaman(saniye);
+            updateMarker(saniye);
+          }, 1000);
+        });
+    }
+
+    // Modal (Duruş Sebebi)
+    const modal = document.getElementById("modal");
+    const modalInput = document.getElementById("modalInput");
+    const modalOk = document.getElementById("modalOk");
+    const modalCancel = document.getElementById("modalCancel");
+
+    function openModal(callback) {
+      if(!modal) return;
+      modal.style.display = "flex";
+      if(modalInput) {
+          modalInput.value = "";
+          modalInput.focus();
+      }
+
+      const okHandler = () => {
+        callback(modalInput ? modalInput.value : "");
+        cleanup();
+      };
+      const cancelHandler = () => {
+        callback(null);
+        cleanup();
+      };
+      const cleanup = () => {
+        modal.style.display = "none";
+        modalOk.removeEventListener("click", okHandler);
+        modalCancel.removeEventListener("click", cancelHandler);
+      };
+
+      if(modalOk) modalOk.addEventListener("click", okHandler);
+      if(modalCancel) modalCancel.addEventListener("click", cancelHandler);
+    }
+
+    const btnEnd = document.getElementById("bitirBtn");
+    if(btnEnd) {
+        btnEnd.addEventListener("click", function() {
+          if(!kronometreInterval) return; 
+
+          clearInterval(kronometreInterval);
+          kronometreInterval = null; 
+          const now = new Date();
+
+          openModal((aciklama) => {
+            if(aciklama === null) return; 
+
+            if(tbody) {
+                tbody.rows[currentRowIndex].cells[1].textContent = now.toLocaleTimeString();
+                tbody.rows[currentRowIndex].cells[2].textContent = aciklama || "-";
+            }
+
+            currentRowIndex++;
+            saniye = 0; 
+            updateMarker(0);
+            if(kronometreEl) kronometreEl.textContent = "00:00:00";
+
+            if(currentRowIndex >= maxRows) {
+              setTimeout(() => alert("Günlük tüm kayıtlar tamamlandı!"), 100);
+            }
+          });
+        });
+    }
+</script>
+</body>
+</html>
